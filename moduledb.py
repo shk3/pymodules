@@ -8,10 +8,7 @@ def _rebuild(args):
     # Rebuild the module database from modulefiles in the path
 
     moduledb = ModuleDb()
-    try:
-        moduledb.rebuild(args.modulepath)
-    except ModuleError as e:
-        e.warn()
+    moduledb.rebuild(args.modulepath)
 
 
 def _insert(args):
@@ -19,10 +16,7 @@ def _insert(args):
 
     moduledb = ModuleDb()
     for modulefile in args.modulefile:
-        try:
-            moduledb.insert(modulefile,args.force)
-        except ModuleError as e:
-            e.warn()
+        moduledb.insert(modulefile,args.force)
 
 
 def main():

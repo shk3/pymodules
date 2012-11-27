@@ -5,7 +5,7 @@ import sys
 import sqlite3 as sqlite
 
 from modulecfg import defaults, MODULEDB, MODULESHELL, LOADEDMODULES, messages
-from moduleutil import splitid, get_simd_flag
+from moduleutil import splitid, get_simd_flag, info
 
 
 class ModuleError(Exception):
@@ -16,7 +16,7 @@ class ModuleError(Exception):
 
     def warn(self):
         """ Print a warning message. """
-        print >> sys.stderr, "%s: warning: %s" % (__name__, self.warning)
+        print >>sys.stderr, "module: warning: %s" % self.warning
 
 
 class Module:
@@ -47,14 +47,25 @@ class Module:
 
         self.versions = []
         self.actions = dict()
+        self.data = dict()
         for section in sections:
 
-            self.versions.append(config.get(section,'version'))
+            version = config.get(section,'version')
+            self.versions.append(version)
             if config.getboolean(section,'default'):
-                self.default_version = self.versions[-1]
+                self.default_version = version
 
             try:
-                self.actions[self.versions[-1]] = dict(config.items(section))
+                self.actions[version] = list()
+                self.data[version] = dict()
+                for key,val in config.items(section):
+                    if key.partition(' ')[0] in ('set', 'append', 'prepend'):
+                        if '"' in val:
+                            raise ModuleError("found illegal '\"' character in action for '%s':\n  %s = %s" % (modulefile,key,val)) 
+                        self.actions[version].append((key,val))
+                    else:
+                        self.data[version][key] = val
+
             except ConfigParser.InterpolationError as e:
                 raise ModuleError("error interpolating modulefile '%s'\n  %s" % (modulefile, str(e)))
 
@@ -69,22 +80,19 @@ class Module:
             'Name:', self.name, '\n', \
             'Versions:', ', '.join(self.versions), '\n', \
             'Default:', self.default_version, '\n\n', \
-            self.actions[version]['brief'], '\n\n', \
-            self.actions[version]['usage']
+            self.data[version]['brief'], '\n\n', \
+            self.data[version]['usage']
 
 
     def show(self,env,version=None):
         """ Prints the environment changes to standard error """
 
         version = self.__pick_version(version)
-        for key in self.actions[version].keys():
+        for key,val in self.actions[version]:
             action = key.split(' ',1)
-            if action[0] == 'set':
-                env.set(action[1],self.actions[version][key])
-            elif action[0] == 'append':
-                env.append(action[1],self.actions[version][key])
-            elif action[0] == 'prepend':
-                env.prepend(action[1],self.actions[version][key])
+            if action[0] == 'set': env.set(action[1],val)
+            elif action[0] == 'append': env.append(action[1],val)
+            elif action[0] == 'prepend': env.prepend(action[1],val)
         
         env.append(LOADEDMODULES,'/'.join([self.name,version]))
 
@@ -95,33 +103,35 @@ class Module:
         self.unload(env)
 
         version = self.__pick_version(version)
-        for key in self.actions[version].keys():
+
+        info("loading '%s/%s'" % (self.name, version))
+
+        for key,val in self.actions[version]:
             action = key.split(' ',1)
-            if action[0] == 'set':
-                env.set(action[1],self.actions[version][key])
-            elif action[0] == 'append':
-                env.append(action[1],self.actions[version][key])
-            elif action[0] == 'prepend':
-                env.prepend(action[1],self.actions[version][key])
+            if action[0] == 'set': env.set(action[1],val)
+            elif action[0] == 'append': env.append(action[1],val)
+            elif action[0] == 'prepend': env.prepend(action[1],val)
 
         env.append(LOADEDMODULES,'/'.join([self.name,version]))
 
 
-    def unload(self,env,version=None):
+    def unload(self,env,strict=False):
         """ Unloads this module and resets the caller's environment """
 
         version = self.__pick_loaded()
         if not version:
-            return # Fail silently
+            if strict:
+                raise ModuleError("'%s' is not currently loaded" % self.name)
+            else:
+                return # Fail silenty
 
-        for key in self.actions[version].keys():
+        info("unloading '%s/%s'" % (self.name, version))
+
+        for key,val in self.actions[version]:
             action = key.split(' ',1)
-            if action[0] == 'set':
-                env.unset(action[1],self.actions[version][key])
-            elif action[0] == 'append':
-                env.remove(action[1],self.actions[version][key])
-            elif action[0] == 'prepend':
-                env.remove(action[1],self.actions[version][key])
+            if action[0] == 'set': env.unset(action[1],val)
+            elif action[0] == 'append': env.remove(action[1],val)
+            elif action[0] == 'prepend': env.remove(action[1],val)
 
         env.remove(LOADEDMODULES,'/'.join([self.name,version]))
 
@@ -134,7 +144,7 @@ class Module:
         elif not version in self.versions:
             raise ModuleError(
                 "unknown version '%s/%s'" % (self.name, version),
-                'unknown')
+                type='unknown')
         else: return version
 
 
@@ -189,7 +199,12 @@ class ModuleDb:
     def insert(self,modulefile,force=False):
         """ Inserts the modulefile as a Module into the database """
 
-        module = Module(modulefile)
+        try:
+            module = Module(modulefile)
+        except ModuleError as e:
+            e.warn()
+            return
+
         blob = sqlite.Binary(pickle.dumps(module,pickle.HIGHEST_PROTOCOL))
 
         if force:
@@ -268,10 +283,10 @@ class ModuleEnv:
 
         if MODULESHELL == 'bash':
             unsetfmt = "unset {0};"
-            setfmt = "export {0}={1};"
+            setfmt = "export {0}=\"{1}\";"
         elif MODULESHELL == 'csh':
             unsetfmt = "unsetenv {0};"
-            setfmt = "setenv {0} {1};"
+            setfmt = "setenv {0} \"{1}\";"
         else:
             raise NotImplementedError(MODULESHELL)
 

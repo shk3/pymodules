@@ -4,7 +4,7 @@ import os
 
 from module import ModuleError, Module, ModuleDb, ModuleEnv
 from modulecfg import LOADEDMODULES
-from moduleutil import splitid, print_centered, print_columns
+from moduleutil import splitid, print_centered, print_columns, set_verbose, info
 
 
 def avail(args):
@@ -32,23 +32,17 @@ def list_loaded(args):
     print_columns(moduleids)
 
 
-def _modulecmd(cmd,moduleids,env):
-    """ Execute a module command on a list of module IDs. """
-
-    moduledb = ModuleDb()
-    for moduleid in moduleids:
-        name,version = splitid(moduleid)
-        try:
-            cmd(moduledb.lookup(name),env,version)
-        except ModuleError as e:
-            e.warn()
-
-
 def load(args):
     """ Load modules. """
 
     env = ModuleEnv()
-    _modulecmd(Module.load,args.module,env)
+    db = ModuleDb()
+    for moduleid in args.module:
+        name,version = splitid(moduleid)
+        try:
+            Module.load(db.lookup(name),env,version)
+        except ModuleError as e:
+            e.warn()
     env.dump()
 
 
@@ -56,7 +50,13 @@ def unload(args):
     """ Unload modules. """
 
     env = ModuleEnv()
-    _modulecmd(Module.unload,args.module,env)
+    db = ModuleDb()
+    for moduleid in args.module:
+        name,version = splitid(moduleid)
+        try:
+            Module.unload(db.lookup(name),env,strict=True)
+        except ModuleError as e:
+            e.warn()
     env.dump()
 
 
@@ -64,14 +64,20 @@ def show(args):
     """ Show environment changes from modules. """
 
     env = ModuleEnv()
-    _modulecmd(Module.show,args.module,env)
+    db = ModuleDb()
+    for moduleid in args.module:
+        name,version = splitid(moduleid)
+        try:
+            Module.show(db.lookup(name),env,version)
+        except ModuleError as e:
+            e.warn()
     env.dump(sys.stderr)
 
 
 def help(args):
     """ Print help message for module. """
 
-    # Doesn't use env or _modulecmd
+    # Doesn't use ModuleEnv or Module
     name,version = splitid(args.module)
     ModuleDb().lookup(name).help(version)
 
@@ -90,6 +96,7 @@ def alias_subcommand(argv):
 def main():
 
     parser = argparse.ArgumentParser(prog='modulecmd')
+    parser.add_argument('-v','--verbose',action='store_true');
 
     subparsers = parser.add_subparsers(title='subcommands')
 
@@ -119,6 +126,7 @@ def main():
 
     alias_subcommand(sys.argv)
     args = parser.parse_args()
+    if args.verbose: set_verbose()
     args.func(args)
 
 
