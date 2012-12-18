@@ -79,7 +79,10 @@ def help(args):
 
     # Doesn't use ModuleEnv or Module
     name,version = splitid(args.module)
-    ModuleDb().lookup(name).help(version)
+    try:
+        ModuleDb().lookup(name).help(version)
+    except ModuleError as e:
+        e.warn()
 
 
 def alias_subcommand(argv):
