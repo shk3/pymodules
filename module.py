@@ -318,7 +318,7 @@ class ModuleEnv:
         """ Appends the path to the environment variable """
 
         paths = self.get(variable)
-        if paths is None:
+        if not paths:
             paths = path
         else:
             paths = paths.split(':')
@@ -332,7 +332,7 @@ class ModuleEnv:
         """ Prepends the path to the environment variable """
 
         paths = self.get(variable)
-        if paths is None:
+        if not paths:
             paths = path
         else:
             paths = paths.split(':')
