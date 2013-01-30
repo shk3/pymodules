@@ -3,9 +3,7 @@ import os
 defaults = {
     'rootdir': '/gpfs/runtime/opt/%(name)s/%(__name__)s',
     'version': '%(__name__)s',
-    'default': 'false',
-    'brief': '',
-    'usage': ''
+    'default': 'false'
 }
 
 MODULEPATH = os.environ['MODULEPATH']

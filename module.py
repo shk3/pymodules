@@ -25,7 +25,11 @@ class Module:
     def __init__(self,modulefile):
         """ Initializes a module from a modulefile """
 
-        config = ConfigParser.SafeConfigParser(defaults)
+        self.name = os.path.basename(modulefile)
+        self.defaults = defaults.copy()
+        self.defaults['name'] = self.name
+
+        config = ConfigParser.SafeConfigParser(self.defaults)
         config.optionxform = str
 
         try:
@@ -40,14 +44,10 @@ class Module:
             raise ModuleError("no versions specified in '%s'" % modulefile)
         self.default_version = config.get(sections[0],'version');
 
-        try:
-            self.name = config.get(self.default_version,'name')
-        except ConfigParser.NoOptionError:
-            raise ModuleError("missing required 'name' in '%s'" % modulefile)
-
         self.versions = []
-        self.actions = dict()
-        self.data = dict()
+        self.actions = {}
+        self.data = {}
+
         for section in sections:
 
             version = config.get(section,'version')
@@ -56,8 +56,8 @@ class Module:
                 self.default_version = version
 
             try:
-                self.actions[version] = list()
-                self.data[version] = dict()
+                self.actions[version] = []
+                self.data[version] = {}
                 for key,val in config.items(section):
                     if key.partition(' ')[0] in ('set', 'append', 'prepend'):
                         if '"' in val:
@@ -67,7 +67,9 @@ class Module:
                         self.data[version][key] = val
 
             except ConfigParser.InterpolationError as e:
-                raise ModuleError("error interpolating modulefile '%s'\n  %s" % (modulefile, str(e)))
+                raise ModuleError(
+                        "error interpreting modulefile '%s'\n  %s" % (
+                        modulefile, str(e)))
 
         self.versions.sort()
 
@@ -77,11 +79,12 @@ class Module:
 
         version = self.__pick_version(version)
         print >>sys.stderr, \
-            'Name:', self.name, '\n', \
-            'Versions:', ', '.join(self.versions), '\n', \
-            'Default:', self.default_version, '\n\n', \
-            self.data[version]['brief'], '\n\n', \
-            self.data[version]['usage']
+            'Name:     ', self.name, '\n', \
+            'Versions: ', ', '.join(self.versions), '\n', \
+            'Default:  ', self.default_version, '\n', \
+            'URL:      ', self.data[version].get('url', ''), '\n', \
+            'Brief:    ', self.data[version].get('brief', ''), '\n\n', \
+            self.data[version].get('usage', '')
 
 
     def show(self,env,version=None):
