@@ -5,6 +5,16 @@ A `modulefile` is an INI-style configuration file with `key = value` pairs
 that specify how a software module will modify the user's environment when
 loaded.
 
+Any value you define can also be referenced by another value using the syntax::
+
+  %(key)s
+
+The most common usage of this is to create a path based on the default
+module hierarchy using the `rootdir` value, which expands to::
+
+  /{module-root}/{module-name}/{module-version}
+
+
 SIMD Architecture
 -----------------
 
