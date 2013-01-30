@@ -1,6 +1,8 @@
 import sys
 import subprocess
 
+_verbose = False
+
 def splitid(moduleid):
     """ Return the module and name from the moduleid """
     
@@ -58,5 +60,21 @@ def get_simd_flag():
         return 'sse3'
     else:
         return '.'
+
+def info(msg):
+    """
+    Print an informational message to stderr, prefixed with "module: ".
+    """
+    global _verbose
+    if _verbose:
+        print >>sys.stderr, "module:", msg
+
+def set_verbose():
+    """
+    Enable verbose messages using the info() utility function.
+    """
+    global _verbose
+    _verbose = True
+    info("verbose output enabled")
 
 # vim:ts=4:shiftwidth=4:expandtab:
