@@ -1,8 +1,19 @@
 import os
 import sys
-from subprocess import check_output
+import subprocess
 
 _verbose = False
+
+def check_output(cmd):
+    """
+    Reimplement this helper function from subprocess for backward
+    compatability with Python 2.6
+    """
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    out = p.communicate()[0]
+    rc = p.poll()
+    return out, rc
+
 
 def splitid(moduleid):
     """ Return the module and name from the moduleid """
@@ -49,7 +60,10 @@ def get_simd_flag():
     """
 
     if os.path.exists('/proc/cpuinfo'):
-        flags = check_output(['grep', '-m', '1', 'flags', '/proc/cpuinfo'])
+        flags, rc = check_output(['grep', '-m', '1', 'flags', '/proc/cpuinfo'])
+        if rc:
+            print >>sys.stderr, "module: warning: couldn't grep /proc/cpuinfo"
+            return '.'
     else:
         return '.'
 
@@ -64,6 +78,7 @@ def get_simd_flag():
     else:
         return '.'
 
+
 def info(msg):
     """
     Print an informational message to stderr, prefixed with "module: ".
@@ -71,6 +86,7 @@ def info(msg):
     global _verbose
     if _verbose:
         print >>sys.stderr, "module:", msg
+
 
 def set_verbose():
     """

@@ -4,7 +4,7 @@ import pickle
 import sys
 import sqlite3 as sqlite
 
-from modulecfg import defaults, MODULEDB, MODULESHELL, LOADEDMODULES, messages
+from modulecfg import *
 from moduleutil import splitid, get_simd_flag, info
 
 
@@ -183,25 +183,32 @@ class ModuleDb:
 
     def __init__(self):
         """ Initializes connections to the sqlite database """
-        self.conn = sqlite.connect(MODULEDB)
+        try:
+            self.conn = sqlite.connect(MODULEDB)
+        except sqlite.OperationalError as e:
+            raise ModuleError(
+                "can't connect to database '%s' (sqlite3 error: %s)" % (
+                MODULEDB, e))
         self.conn.row_factory = sqlite.Row
-
-
-    def __del__(self):
-        """ Closes connections to the sqlite database """
-        self.conn.close()
 
 
     def rebuild(self,path):
         """ Rebuilds the database with the modulefiles in the path """
 
-        self.conn.execute("DROP TABLE IF EXISTS modules")
+        # Since rebuild can take some time, write the new database to a
+        # temporary path to prevent service interruption.
+        tmpfile = MODULEDB + '~'
+        if os.path.exists(tmpfile):
+            os.unlink(tmpfile)
+
+        self.conn.close()
+        self.conn = sqlite.connect(tmpfile)
+
         self.conn.execute("""
             CREATE TABLE modules (
                 name TEXT PRIMARY KEY,
                 data BLOB)""")
 
-        self.conn.execute("DROP TABLE IF EXISTS moduleids")
         self.conn.execute("""
             CREATE TABLE moduleids (
                 name TEXT,
@@ -211,6 +218,15 @@ class ModuleDb:
         for modulefile in os.listdir(path):
             if not modulefile.startswith('.'):
                 self.insert(os.path.join(path,modulefile))
+
+        # Move temporary database in place ...
+        self.conn.close()
+        os.chmod(tmpfile, moduleperm)
+        os.rename(tmpfile, MODULEDB)
+
+        # ... and reestablish the connection.
+        self.conn = sqlite.connect(MODULEDB)
+        self.conn.row_factory = sqlite.Row
 
 
     def insert(self,modulefile,force=False):
@@ -225,22 +241,30 @@ class ModuleDb:
         blob = sqlite.Binary(pickle.dumps(module,pickle.HIGHEST_PROTOCOL))
 
         if force:
-            self.conn.execute("REPLACE INTO modules VALUES (?,?)",
+            self.conn.execute(
+                "REPLACE INTO modules VALUES (?,?)",
                 (module.name,blob))
-            self.conn.execute("DELETE FROM moduleids WHERE name = ?",
+            self.conn.execute(
+                "DELETE FROM moduleids WHERE name = ?",
                 (module.name,))
         else:
             try:
-                self.conn.execute("INSERT INTO modules VALUES (?,?)",
+                self.conn.execute(
+                    "INSERT INTO modules VALUES (?,?)",
                     (module.name,blob))
             except sqlite.IntegrityError:
-                raise ModuleError("duplicate module already in database for '%s'" % module.name)
+                raise ModuleError(
+                        "duplicate module already in database for '%s'" % \
+                        module.name)
         
         for version in module.versions:
-            self.conn.execute("INSERT INTO moduleids VALUES (?,?)",
+            self.conn.execute(
+                "INSERT INTO moduleids VALUES (?,?)",
                 (module.name,version))
 
         self.conn.commit()
+
+        os.chmod(modulefile, moduleperm)
 
 
     def lookup(self,name):
