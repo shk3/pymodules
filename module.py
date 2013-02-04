@@ -141,9 +141,14 @@ class Module:
 
         for key,val in self.actions[version]:
             action = key.split(' ',1)
-            if action[0] == 'set': env.unset(action[1],val)
-            elif action[0] == 'append': env.remove(action[1],val)
-            elif action[0] == 'prepend': env.remove(action[1],val)
+            if action[0] == 'set':
+                env.unset(action[1],val)
+            elif action[0] == 'append':
+                for item in val.split(':'):
+                    env.remove(action[1],item)
+            elif action[0] == 'prepend':
+                for item in val.split(':'):
+                    env.remove(action[1],item)
 
         env.remove(LOADEDMODULES,'/'.join([self.name,version]))
 
