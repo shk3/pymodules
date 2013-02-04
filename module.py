@@ -34,12 +34,12 @@ class Module:
 
         try:
             config.read(modulefile)
+        except ConfigParser.MissingSectionHeaderError:
+            raise ModuleError("no versions specified in '%s'" % modulefile)
         except ConfigParser.ParsingError as e:
             raise ModuleError(
                     "error parsing modulefile '%s'\n%s" % (
                     modulefile, e))
-        except ConfigParser.MissingSectionHeaderError:
-            raise ModuleError("no versions specified in '%s'" % modulefile)
 
         sections = config.sections()
         if not sections:
@@ -175,7 +175,6 @@ class Module:
                 if name == self.name:
                     return version
         return None
-
 
 
 class ModuleDb:
@@ -331,13 +330,10 @@ class ModuleEnv:
         else:
             raise NotImplementedError(MODULESHELL)
 
-        if self._simd is None:
-            self._simd = get_simd_flag()
-
         for var in self._env_unset:
             print >>out, unsetfmt.format(var)
         for var,val in self._env.iteritems():
-            print >>out, setfmt.format(var,val.replace('%SIMD%', self._simd))
+            print >>out, setfmt.format(var,val)
 
 
     def set(self,variable,value):
@@ -358,6 +354,7 @@ class ModuleEnv:
     def append(self,variable,path):
         """ Appends the path to the environment variable """
 
+        path = self.__simdize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -372,6 +369,7 @@ class ModuleEnv:
     def prepend(self,variable,path):
         """ Prepends the path to the environment variable """
 
+        path = self.__simdize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -386,12 +384,25 @@ class ModuleEnv:
     def remove(self,variable,path):
         """ Removes the path from the environment variable """
 
+        path = self.__simdize(path)
         paths = self.get(variable)
         if paths:
             paths = paths.split(':')
             paths = [x for x in paths if x != path]
             paths = ':'.join(paths)
             self.set(variable,paths)
+
+
+    def __simdize(self,val):
+        """
+        Replace the special value %SIMD% in a path with the appropriate
+        SSE instruction level of the current machine.
+        """
+
+        if self._simd is None:
+            self._simd = get_simd_flag()
+
+        return val.replace('%SIMD%', self._simd)
 
 
 # vim:ts=4:shiftwidth=4:expandtab:
