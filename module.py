@@ -34,8 +34,10 @@ class Module:
 
         try:
             config.read(modulefile)
-        except ConfigParser.ParsingError:
-            raise ModuleError("error parsing modulefile '%s'" % modulefile)
+        except ConfigParser.ParsingError as e:
+            raise ModuleError(
+                    "error parsing modulefile '%s'\n%s" % (
+                    modulefile, e))
         except ConfigParser.MissingSectionHeaderError:
             raise ModuleError("no versions specified in '%s'" % modulefile)
 
@@ -79,12 +81,15 @@ class Module:
 
         version = self.__pick_version(version)
         print >>sys.stderr, \
-            'Name:     ', self.name, '\n', \
-            'Versions: ', ', '.join(self.versions), '\n', \
-            'Default:  ', self.default_version, '\n', \
-            'URL:      ', self.data[version].get('url', ''), '\n', \
-            'Brief:    ', self.data[version].get('brief', ''), '\n\n', \
-            self.data[version].get('usage', '')
+            '\nName:     ', self.name, \
+            '\nVersions: ', ', '.join(self.versions), \
+            '\nDefault:  ', self.default_version, \
+            '\nURL:      ', self.data[version].get('url', ''), \
+            '\nBrief:    ', self.data[version].get('brief', ''), \
+            '\n\n', self.data[version].get('usage', '')
+        if 'loadmsg' in self.data[version]:
+            print >>sys.stderr, \
+               "\nLoad Message:\n%s" % self.data[version]['loadmsg']
 
 
     def show(self,env,version=None):
@@ -108,6 +113,10 @@ class Module:
         version = self.__pick_version(version)
 
         info("loading '%s/%s'" % (self.name, version))
+        if 'loadmsg' in self.data[version]:
+            print >>sys.stderr, \
+                "module: %s: %s" % (
+                self.name, self.data[version]['loadmsg'])
 
         for key,val in self.actions[version]:
             action = key.split(' ',1)
