@@ -1,5 +1,6 @@
+import os
 import sys
-import subprocess
+from subprocess import check_output
 
 _verbose = False
 
@@ -47,9 +48,11 @@ def get_simd_flag():
     the set ('avx', 'sse4.2', 'sse4a', 'sse3', '.').
     """
 
-    flags = subprocess.Popen(
-                ['grep', '-m', '1', 'flags', '/proc/cpuinfo'],
-                stdout=subprocess.PIPE).communicate()[0]
+    if os.path.exists('/proc/cpuinfo'):
+        flags = check_output(['grep', '-m', '1', 'flags', '/proc/cpuinfo'])
+    else:
+        return '.'
+
     if ' avx ' in flags:
         return 'avx'
     elif ' sse4_2 ' in flags:
