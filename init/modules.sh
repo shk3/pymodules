@@ -38,7 +38,18 @@ export -f moduledb
 _module_avail_complete() {
 	# Split the module 'name' into the name proper and the version string.
 	local name=(${1/\// })
-	echo "SELECT name, version FROM moduleids WHERE name LIKE '${name[0]}%' AND version LIKE '%${name[1]}%';" | sqlite3 -separator / ${MODULEPATH}/.db.sqlite
+	if [ ${#name[@]} -gt 1 -o "$1" == "${name[0]}/" ]
+	then
+		echo "	SELECT name, version
+			FROM moduleids
+			WHERE name='${name[0]}' AND version LIKE '${name[1]}%';" | \
+			sqlite3 -separator / ${MODULEPATH}/.db.sqlite
+	else
+		echo "	SELECT name, version
+			FROM moduleids
+			WHERE name LIKE '${name[0]}%';" | \
+			sqlite3 -separator / ${MODULEPATH}/.db.sqlite
+	fi
 }
 
 _module_complete() {
