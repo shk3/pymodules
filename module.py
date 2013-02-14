@@ -142,7 +142,7 @@ class Module:
         for key,val in self.actions[version]:
             action = key.split(' ',1)
             if action[0] == 'set':
-                env.unset(action[1],val)
+                env.unset(action[1])
             elif action[0] == 'append':
                 for item in val.split(':'):
                     env.remove(action[1],item)
@@ -344,7 +344,7 @@ class ModuleEnv:
         self._env[variable] = value
 
 
-    def unset(self,variable,value):
+    def unset(self,variable,value=None):
         """ Unsets/resets the environment variable to the specified value """
 
         self._env_unset.add(variable)
