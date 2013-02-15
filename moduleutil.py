@@ -3,6 +3,7 @@ import sys
 import subprocess
 
 _verbose = False
+_simd = None
 
 def check_output(cmd):
     """
@@ -53,30 +54,37 @@ def print_columns(moduleids,term_width=80):
         print >>sys.stderr, line
 
 
-def get_simd_flag():
+def simdize(path):
     """
-    Lookup the latest SIMD instruction supported on the current machine, in
-    the set ('avx', 'sse4.2', 'sse4a', 'sse3', '.').
+    Replace the special value `%SIMD%` in `path` with the highest SSE
+    instruction level of the current machine, in the set:
+
+        (`avx`, `sse4.2`, `sse4a`, `sse3`, `.`)
     """
+    global _simd
+    if _simd is None:
 
-    if os.path.exists('/proc/cpuinfo'):
-        flags, rc = check_output(['grep', '-m', '1', 'flags', '/proc/cpuinfo'])
-        if rc:
-            print >>sys.stderr, "module: warning: couldn't grep /proc/cpuinfo"
-            return '.'
-    else:
-        return '.'
+        if os.path.exists('/proc/cpuinfo'):
 
-    if ' avx ' in flags:
-        return 'avx'
-    elif ' sse4_2 ' in flags:
-        return 'sse4.2'
-    elif ' sse4a ' in flags:
-        return 'sse4a'
-    elif ' sse3 ' in flags:
-        return 'sse3'
-    else:
-        return '.'
+            cmd = ['grep', '-m', '1', 'flags', '/proc/cpuinfo']
+            flags, rc = check_output(cmd)
+
+            if rc:
+                print >>sys.stderr, \
+                    "module: warning: couldn't grep /proc/cpuinfo"
+                _simd = '.'
+
+            else:
+                if ' avx ' in flags:        _simd = 'avx'
+                elif ' sse4_2 ' in flags:   _simd = 'sse4.2'
+                elif ' sse4a ' in flags:    _simd = 'sse4a'
+                elif ' sse3 ' in flags:     _simd = 'sse3'
+                else:                       _simd = '.'
+
+        else:
+            _simd = '.'
+
+    return path.replace('%SIMD%', _simd)
 
 
 def info(msg):
