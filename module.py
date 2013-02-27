@@ -279,25 +279,16 @@ class ModuleDb:
         else: raise ModuleError("unknown module '%s'" % name, 'unknown')
 
 
-    def avail(self,name='',version='',verbose=False):
+    def avail(self,name='',version=''):
         """ Return a list of the modules in the database matching the
             specified name and version. """
 
-        if not verbose:
-            cursor = self.conn.execute("""
-                SELECT name
-                FROM modules
-                WHERE name LIKE ?""",(name+'%',))
-            modules = [module['name'] for module in cursor]
-        else:
-            cursor = self.conn.execute("""
-                SELECT name, version
-                FROM moduleids
-                WHERE name LIKE ? AND version LIKE ? """,
-                (name+'%','%'+version+'%'))
-            modules = [module['name']+'/'+module['version'] for module in cursor]
-
-        return modules
+        cursor = self.conn.execute("""
+            SELECT name, version
+            FROM moduleids
+            WHERE name LIKE ? AND version LIKE ? """,
+            (name+'%','%'+version+'%'))
+        return [module['name']+'/'+module['version'] for module in cursor]
 
 
 class ModuleEnv:

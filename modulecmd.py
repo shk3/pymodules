@@ -4,7 +4,7 @@ import os
 
 from module import ModuleError, Module, ModuleDb, ModuleEnv
 from modulecfg import LOADEDMODULES
-from moduleutil import splitid, print_centered, print_columns, set_verbose, info
+from moduleutil import splitid, print_centered, print_columns, info
 
 
 def avail(args):
@@ -12,12 +12,12 @@ def avail(args):
 
     moduledb = ModuleDb()
     if not args.module:
-        matches = sorted(moduledb.avail(verbose=args.verbose))
+        matches = sorted(moduledb.avail())
         print_columns(matches)
     else:
         for moduleid in args.module:
             name,version = splitid(moduleid)
-            matches = moduledb.avail(name,version,args.verbose)
+            matches = moduledb.avail(name,version)
             print_columns(matches)
 
 
@@ -99,12 +99,10 @@ def alias_subcommand(argv):
 def main():
 
     parser = argparse.ArgumentParser(prog='modulecmd')
-    parser.add_argument('-v','--verbose',action='store_true');
 
     subparsers = parser.add_subparsers(title='subcommands')
 
     avail_parser = subparsers.add_parser('avail')
-    avail_parser.add_argument('-v','--verbose',action='store_true');
     avail_parser.add_argument('module',nargs='*')
     avail_parser.set_defaults(func=avail)
 
@@ -129,7 +127,6 @@ def main():
 
     alias_subcommand(sys.argv)
     args = parser.parse_args()
-    if args.verbose: set_verbose()
     args.func(args)
 
 

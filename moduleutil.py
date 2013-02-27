@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 
-_verbose = False
 
 def check_output(cmd):
     """
@@ -83,17 +82,7 @@ def info(msg):
     """
     Print an informational message to stderr, prefixed with "module: ".
     """
-    global _verbose
-    if _verbose:
-        print >>sys.stderr, "module:", msg
+    print >>sys.stderr, "module:", msg
 
-
-def set_verbose():
-    """
-    Enable verbose messages using the info() utility function.
-    """
-    global _verbose
-    _verbose = True
-    info("verbose output enabled")
 
 # vim:ts=4:shiftwidth=4:expandtab:
