@@ -79,10 +79,10 @@ complete -F _module_complete module
 
 # Load default modules, first from the global defaults, then from the user's
 # ~/.modules file.
-if [ -r ${MODULEPATH}/.modules ]; then
-	. ${MODULEPATH}/.modules
-fi
-if [ -r ${HOME}/.modules ]; then
-	. ${HOME}/.modules
-fi
+#if [ -r ${MODULEPATH}/.modules ]; then
+#	. ${MODULEPATH}/.modules
+#fi
+#if [ -r ${HOME}/.modules ]; then
+#	. ${HOME}/.modules
+#fi
 

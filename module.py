@@ -3,7 +3,6 @@ import os
 import pickle
 import sys
 import sqlite3 as sqlite
-from collections import defaultdict
 
 from modulecfg import *
 from moduleutil import splitid, simdize, info, print_columns
@@ -329,9 +328,9 @@ class ModuleDb:
         cursor = self.conn.execute("""
             SELECT name, version
             FROM moduleids
-            WHERE name LIKE ? AND version LIKE ? """,
+            WHERE name LIKE ? AND version LIKE ?
+            ORDER BY name """,
             (name+'%','%'+version+'%'))
-        #return [module['name']+'/'+module['version'] for module in cursor]
         return map('/'.join, cursor)
 
 
@@ -341,12 +340,17 @@ class ModuleDb:
         cursor = self.conn.execute("""
             SELECT category, name, version
             FROM categories
-            WHERE category LIKE ? """,
+            WHERE category LIKE ? 
+            ORDER BY category, name """,
             (category+'%',))
-        matches = defaultdict(list)
+        category = None
+        matches = []
         for row in cursor:
-            matches[row[0]].append(row[1]+'/'+row[2])
-        return matches.iteritems()
+            if row[0] != category:
+                category = row[0]
+                matches.append((category, []))
+            matches[-1][1].append(row[1]+'/'+row[2])
+        return matches
 
 
 class ModuleEnv:
