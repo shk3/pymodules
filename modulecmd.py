@@ -8,7 +8,9 @@ from moduleutil import splitid, print_centered, print_columns
 
 
 def avail(args):
-    """ Print a list of available modules. """
+    """
+    List available modules.
+    """
 
     moduledb = ModuleDb()
     if not args.module:
@@ -29,7 +31,9 @@ def avail(args):
 
 
 def list_loaded(args):
-    """ Print a list of loaded modules. """
+    """
+    List currently loaded modules.
+    """
 
     moduleids = os.getenv(LOADEDMODULES)
     if not moduleids:
@@ -40,7 +44,10 @@ def list_loaded(args):
 
 
 def load(args):
-    """ Load modules. """
+    """
+    Load modules, unloading any versions that are already loaded.
+    aliases: add switch swap
+    """
 
     env = ModuleEnv()
     db = ModuleDb()
@@ -54,7 +61,10 @@ def load(args):
 
 
 def unload(args):
-    """ Unload modules. """
+    """
+    Unload modules, if the specified version is already loaded.
+    aliases: rm remove
+    """
 
     env = ModuleEnv()
     db = ModuleDb()
@@ -68,7 +78,10 @@ def unload(args):
 
 
 def show(args):
-    """ Show environment changes from modules. """
+    """
+    Show the environment changes that will be made when loading the module.
+    aliases: display
+    """
 
     env = ModuleEnv()
     db = ModuleDb()
@@ -82,7 +95,10 @@ def show(args):
 
 
 def help(args):
-    """ Print help message for module. """
+    """
+    Print additional information about a module.
+    aliases: whatis
+    """
 
     # Doesn't use ModuleEnv or Module
     name,version = splitid(args.module)
@@ -92,8 +108,24 @@ def help(args):
         e.warn()
 
 
+def list_bin(args):
+    """ 
+    List the programs provided by the module.
+    """
+
+    db = ModuleDb()
+    for moduleid in args.module:
+        name,version = splitid(moduleid)
+        try:
+            Module.list_bin(db.lookup(name),version)
+        except ModuleError as e:
+            e.warn()
+
+
 def alias_subcommand(argv):
-    """ Substitute aliases for each command """
+    """
+    Substitute aliases for each command.
+    """
 
     i = 1 # subcommand is at argument index 1
     if len(argv) > i:
@@ -109,28 +141,32 @@ def main():
 
     subparsers = parser.add_subparsers(title='subcommands')
 
-    avail_parser = subparsers.add_parser('avail')
+    avail_parser = subparsers.add_parser('avail', help=avail.__doc__)
     avail_parser.add_argument('module',nargs='*')
     avail_parser.set_defaults(func=avail)
 
-    load_parser = subparsers.add_parser('load', help="aliases: add switch swap")
+    load_parser = subparsers.add_parser('load', help=load.__doc__)
     load_parser.add_argument('module',nargs='+')
     load_parser.set_defaults(func=load)
 
-    unload_parser = subparsers.add_parser('unload', help="aliases: rm remove")
+    unload_parser = subparsers.add_parser('unload', help=unload.__doc__)
     unload_parser.add_argument('module',nargs='+')
     unload_parser.set_defaults(func=unload)
 
-    list_parser = subparsers.add_parser('list')
+    list_parser = subparsers.add_parser('list', help=list_loaded.__doc__)
     list_parser.set_defaults(func=list_loaded)
 
-    show_parser = subparsers.add_parser('show', help="aliases: display")
+    show_parser = subparsers.add_parser('show', help=show.__doc__)
     show_parser.add_argument('module',nargs='+')
     show_parser.set_defaults(func=show)
 
-    help_parser = subparsers.add_parser('help', help="aliases: whatis")
+    help_parser = subparsers.add_parser('help', help=help.__doc__)
     help_parser.add_argument('module')
     help_parser.set_defaults(func=help)
+
+    bin_parser = subparsers.add_parser('bin', help=list_bin.__doc__)
+    bin_parser.add_argument('module',nargs='+')
+    bin_parser.set_defaults(func=list_bin)
 
     alias_subcommand(sys.argv)
     args = parser.parse_args()

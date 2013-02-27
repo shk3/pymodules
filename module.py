@@ -6,7 +6,7 @@ import sqlite3 as sqlite
 from collections import defaultdict
 
 from modulecfg import *
-from moduleutil import splitid, get_simd_flag, info
+from moduleutil import splitid, simdize, info, print_columns
 
 
 class ModuleError(Exception):
@@ -50,6 +50,7 @@ class Module:
         self.versions = []
         self.actions = {}
         self.data = {}
+        self.paths = {}
 
         for section in sections:
 
@@ -61,11 +62,14 @@ class Module:
             try:
                 self.actions[version] = []
                 self.data[version] = {}
+                self.paths[version] = []
                 for key,val in config.items(section):
                     if key.partition(' ')[0] in ('set', 'append', 'prepend'):
                         if '"' in val:
                             raise ModuleError("found illegal '\"' character in action for '%s':\n  %s = %s" % (modulefile,key,val)) 
                         self.actions[version].append((key,val))
+                        if key.partition(' ')[2] == 'PATH':
+                            self.paths[version] += val.split(':')
                     else:
                         self.data[version][key] = val
 
@@ -152,6 +156,23 @@ class Module:
                     env.remove(action[1],item)
 
         env.remove(LOADEDMODULES,'/'.join([self.name,version]))
+
+
+    def list_bin(self,version):
+        """ List the executables provided by the module. """
+
+        version = self.__pick_version(version)
+
+        # Lambda function tests if a path is an executable file
+        is_exe = lambda f: os.path.isfile(f) and os.access(f, os.X_OK)
+
+        for path in self.paths[version]:
+            path = simdize(path)
+            os.chdir(path)
+            programs = filter(is_exe, os.listdir(path))
+            if programs:
+                print >>sys.stderr, "%s:" % path
+                print_columns(sorted(programs))
 
 
     def __pick_version(self,version):
@@ -334,7 +355,6 @@ class ModuleEnv:
     def __init__(self):
         self._env = dict()
         self._env_unset = set()
-        self._simd = None
 
 
     def get(self,variable):
@@ -382,7 +402,7 @@ class ModuleEnv:
     def append(self,variable,path):
         """ Appends the path to the environment variable """
 
-        path = self.__simdize(path)
+        path = simdize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -397,7 +417,7 @@ class ModuleEnv:
     def prepend(self,variable,path):
         """ Prepends the path to the environment variable """
 
-        path = self.__simdize(path)
+        path = simdize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -412,25 +432,13 @@ class ModuleEnv:
     def remove(self,variable,path):
         """ Removes the path from the environment variable """
 
-        path = self.__simdize(path)
+        path = simdize(path)
         paths = self.get(variable)
         if paths:
             paths = paths.split(':')
             paths = [x for x in paths if x != path]
             paths = ':'.join(paths)
             self.set(variable,paths)
-
-
-    def __simdize(self,val):
-        """
-        Replace the special value %SIMD% in a path with the appropriate
-        SSE instruction level of the current machine.
-        """
-
-        if self._simd is None:
-            self._simd = get_simd_flag()
-
-        return val.replace('%SIMD%', self._simd)
 
 
 # vim:ts=4:shiftwidth=4:expandtab:

@@ -1,7 +1,7 @@
 ### MODIFY THESE ###
 
-export MODULEHOME=/gpfs/runtime/pymodules
-export MODULEPATH=/gpfs/runtime/modulefiles
+export MODULEHOME=$HOME/code/pymodules
+export MODULEPATH=$HOME/modulefiles
 export MODULESHELL=bash
 export MODULEPYTHON=/usr/bin/python
 
