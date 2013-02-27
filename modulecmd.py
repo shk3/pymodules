@@ -14,8 +14,7 @@ def avail(args):
 
     moduledb = ModuleDb()
     if not args.module:
-        matches = sorted(moduledb.avail())
-        print_columns(matches)
+        args.module = [':']
     for moduleid in args.module:
         name,version = splitid(moduleid)
         if name.startswith(':'):
