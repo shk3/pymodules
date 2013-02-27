@@ -3,6 +3,7 @@ import os
 import pickle
 import sys
 import sqlite3 as sqlite
+from collections import defaultdict
 
 from modulecfg import *
 from moduleutil import splitid, get_simd_flag, info
@@ -16,7 +17,7 @@ class ModuleError(Exception):
 
     def warn(self):
         """ Print a warning message. """
-        print >>sys.stderr, "module: warning: %s" % self.warning
+        print >>sys.stderr, "module: warning:", self.warning
 
 
 class Module:
@@ -181,13 +182,20 @@ class ModuleDb:
     """ Encapsulates the database of modules """
 
     def __init__(self):
+        self.conn = None
+        self.connect()
+
+
+    def connect(self, dbfile=MODULEDB):
         """ Initializes connections to the sqlite database """
         try:
-            self.conn = sqlite.connect(MODULEDB)
+            if self.conn:
+                self.conn.close()
+            self.conn = sqlite.connect(dbfile, isolation_level=None)
         except sqlite.OperationalError as e:
             raise ModuleError(
                 "can't connect to database '%s' (sqlite3 error: %s)" % (
-                MODULEDB, e))
+                dbfile, e))
         self.conn.row_factory = sqlite.Row
 
 
@@ -200,8 +208,7 @@ class ModuleDb:
         if os.path.exists(tmpfile):
             os.unlink(tmpfile)
 
-        self.conn.close()
-        self.conn = sqlite.connect(tmpfile)
+        self.connect(tmpfile)
 
         self.conn.execute("""
             CREATE TABLE modules (
@@ -214,6 +221,13 @@ class ModuleDb:
                 version TEXT,
                 PRIMARY KEY (name,version))""")
 
+        self.conn.execute("""
+            CREATE TABLE categories (
+                category TEXT,
+                name TEXT,
+                version TEXT,
+                PRIMARY KEY (category,name,version))""")
+
         for modulefile in os.listdir(path):
             if not modulefile.startswith('.'):
                 self.insert(os.path.join(path,modulefile))
@@ -224,8 +238,7 @@ class ModuleDb:
         os.rename(tmpfile, MODULEDB)
 
         # ... and reestablish the connection.
-        self.conn = sqlite.connect(MODULEDB)
-        self.conn.row_factory = sqlite.Row
+        self.connect()
 
 
     def insert(self,modulefile,force=False):
@@ -239,12 +252,17 @@ class ModuleDb:
 
         blob = sqlite.Binary(pickle.dumps(module,pickle.HIGHEST_PROTOCOL))
 
+        self.conn.execute('BEGIN')
+
         if force:
             self.conn.execute(
                 "REPLACE INTO modules VALUES (?,?)",
                 (module.name,blob))
             self.conn.execute(
                 "DELETE FROM moduleids WHERE name = ?",
+                (module.name,))
+            self.conn.execute(
+                "DELETE FROM categories WHERE name = ?",
                 (module.name,))
         else:
             try:
@@ -260,8 +278,12 @@ class ModuleDb:
             self.conn.execute(
                 "INSERT INTO moduleids VALUES (?,?)",
                 (module.name,version))
-
-        self.conn.commit()
+            for category in module.data[version].get('category', '(none)').split(','):
+                self.conn.execute(
+                    "INSERT INTO categories VALUES (?,?,?)",
+                    (category,module.name,version))
+            
+        self.conn.execute('COMMIT')
 
         os.chmod(modulefile, moduleperm)
 
@@ -288,7 +310,22 @@ class ModuleDb:
             FROM moduleids
             WHERE name LIKE ? AND version LIKE ? """,
             (name+'%','%'+version+'%'))
-        return [module['name']+'/'+module['version'] for module in cursor]
+        #return [module['name']+'/'+module['version'] for module in cursor]
+        return map('/'.join, cursor)
+
+
+    def avail_category(self,category=''):
+        """ Return a list of modules organized by category. """
+
+        cursor = self.conn.execute("""
+            SELECT category, name, version
+            FROM categories
+            WHERE category LIKE ? """,
+            (category+'%',))
+        matches = defaultdict(list)
+        for row in cursor:
+            matches[row[0]].append(row[1]+'/'+row[2])
+        return matches.iteritems()
 
 
 class ModuleEnv:

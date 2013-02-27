@@ -4,7 +4,7 @@ import os
 
 from module import ModuleError, Module, ModuleDb, ModuleEnv
 from modulecfg import LOADEDMODULES
-from moduleutil import splitid, print_centered, print_columns, info
+from moduleutil import splitid, print_centered, print_columns
 
 
 def avail(args):
@@ -14,11 +14,18 @@ def avail(args):
     if not args.module:
         matches = sorted(moduledb.avail())
         print_columns(matches)
-    else:
-        for moduleid in args.module:
-            name,version = splitid(moduleid)
-            matches = moduledb.avail(name,version)
-            print_columns(matches)
+    for moduleid in args.module:
+        name,version = splitid(moduleid)
+        if name.startswith(':'):
+            for category, matches in moduledb.avail_category(name[1:]):
+                print_centered('category: ' + category)
+                print_columns(matches)
+        else:
+            title = 'name: %s*/*' % name
+            if version:
+                title = '%s%s*' % (title, version)
+            print_centered(title)
+            print_columns(moduledb.avail(name,version))
 
 
 def list_loaded(args):
