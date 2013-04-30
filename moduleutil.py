@@ -29,17 +29,7 @@ import subprocess
 
 
 _simd = None
-
-
-def check_output(cmd):
-    """
-    Reimplement this helper function from subprocess for backward
-    compatability with Python 2.6
-    """
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    out = p.communicate()[0]
-    rc = p.poll()
-    return out, rc
+_vendor = None
 
 
 def splitid(moduleid):
@@ -80,37 +70,43 @@ def print_columns(moduleids,term_width=80):
         print >>sys.stderr, line
 
 
-def simdize(path):
+def localize(path):
     """
     Replace the special value `%SIMD%` in `path` with the highest SSE
     instruction level of the current machine, in the set:
 
         (`avx`, `sse4.2`, `sse4a`, `sse3`, `.`)
+
+    And the special value `%VENDOR$` with either `intel`, `amd`, or `.`.
+
+    Note: only works on Linux, since values are read from `/proc/cpuinfo`.
     """
-    global _simd
-    if _simd is None:
+    global _simd, _vendor
 
+    if _simd is None or _vendor is None:
         if os.path.exists('/proc/cpuinfo'):
+            try:
+                for line in open('/proc/cpuinfo'):
+                    if line.startswith('vendor_id'):
+                        if 'GenuineIntel' in line:    _vendor = 'intel'
+                        elif 'AuthenticAMD' in line:  _vendor = 'amd'
+                        else:                         _vendor = '.'
+                    elif line.startswith('flags'):
+                        flags = set(line.split())
+                        if 'avx' in flags:        _simd = 'avx'
+                        elif 'sse4_2' in flags:   _simd = 'sse4.2'
+                        elif 'sse4a' in flags:    _simd = 'sse4a'
+                        elif 'sse3' in flags:     _simd = 'sse3'
+                        else:                     _simd = '.'
+                        break
 
-            cmd = ['grep', '-m', '1', 'flags', '/proc/cpuinfo']
-            flags, rc = check_output(cmd)
-
-            if rc:
+            except:
                 print >>sys.stderr, \
-                    "module: warning: couldn't grep /proc/cpuinfo"
+                    "module: warning: couldn't parse /proc/cpuinfo"
                 _simd = '.'
+                _vendor = '.'
 
-            else:
-                if ' avx ' in flags:        _simd = 'avx'
-                elif ' sse4_2 ' in flags:   _simd = 'sse4.2'
-                elif ' sse4a ' in flags:    _simd = 'sse4a'
-                elif ' sse3 ' in flags:     _simd = 'sse3'
-                else:                       _simd = '.'
-
-        else:
-            _simd = '.'
-
-    return path.replace('%SIMD%', _simd)
+    return path.replace('%SIMD%', _simd).replace('%VENDOR%', _vendor)
 
 
 def info(msg):

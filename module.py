@@ -29,7 +29,7 @@ import sys
 import sqlite3 as sqlite
 
 from modulecfg import *
-from moduleutil import splitid, simdize, info, print_columns
+from moduleutil import splitid, localize, info, print_columns
 
 
 class ModuleError(Exception):
@@ -190,7 +190,7 @@ class Module:
         is_exe = lambda f: os.path.isfile(f) and os.access(f, os.X_OK)
 
         for path in self.paths[version]:
-            path = simdize(path)
+            path = localize(path)
             os.chdir(path)
             programs = filter(is_exe, os.listdir(path))
             if programs:
@@ -430,7 +430,7 @@ class ModuleEnv:
     def append(self,variable,path):
         """ Appends the path to the environment variable """
 
-        path = simdize(path)
+        path = localize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -445,7 +445,7 @@ class ModuleEnv:
     def prepend(self,variable,path):
         """ Prepends the path to the environment variable """
 
-        path = simdize(path)
+        path = localize(path)
         paths = self.get(variable)
         if not paths:
             paths = path
@@ -460,7 +460,7 @@ class ModuleEnv:
     def remove(self,variable,path):
         """ Removes the path from the environment variable """
 
-        path = simdize(path)
+        path = localize(path)
         paths = self.get(variable)
         if paths:
             paths = paths.split(':')
