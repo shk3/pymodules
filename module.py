@@ -415,7 +415,7 @@ class ModuleEnv:
     def set(self,variable,value):
         """ Sets the environment variable to the specified value """
 
-        if variable == 'MANPATH' and value[-1] != ':':
+        if variable == 'MANPATH' and (not value or value[-1] != ':'):
             value += ':'
         self._env[variable] = value
 
