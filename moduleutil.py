@@ -28,8 +28,7 @@ import sys
 import subprocess
 
 
-_simd = None
-_vendor = None
+_localized = None
 
 
 def splitid(moduleid):
@@ -81,32 +80,43 @@ def localize(path):
 
     Note: only works on Linux, since values are read from `/proc/cpuinfo`.
     """
-    global _simd, _vendor
+    global _localized
 
-    if _simd is None or _vendor is None:
+    if not _localized:
+        _localized = { 'vendor': '.', 'simd': '.', 'model': '.' }
         if os.path.exists('/proc/cpuinfo'):
             try:
                 for line in open('/proc/cpuinfo'):
                     if line.startswith('vendor_id'):
-                        if 'GenuineIntel' in line:    _vendor = 'intel'
-                        elif 'AuthenticAMD' in line:  _vendor = 'amd'
-                        else:                         _vendor = '.'
+                        vendor = line.rstrip().split()[2]
+                        if vendor == 'GenuineIntel':
+                            _localized['vendor'] = 'intel'
+                        elif vendor == 'AuthenticAMD':
+                            _localized['vendor'] = 'amd'
+                        _localized['model'] = vendor
+                    elif line.startswith('cpu family'):
+                        _localized['model'] += '-' + line.rstrip().split()[-1]
+                    elif line.startswith('model'):
+                        _localized['model'] += '-' + line.rstrip().split()[-1]
                     elif line.startswith('flags'):
-                        flags = set(line.split())
-                        if 'avx' in flags:        _simd = 'avx'
-                        elif 'sse4_2' in flags:   _simd = 'sse4.2'
-                        elif 'sse4a' in flags:    _simd = 'sse4a'
-                        elif 'sse3' in flags:     _simd = 'sse3'
-                        else:                     _simd = '.'
+                        flags = set(line.rstrip().split()[2:])
+                        if 'avx' in flags:
+                            _localized['simd'] = 'avx'
+                        elif 'sse4_2' in flags:
+                            _localized['simd'] = 'sse4.2'
+                        elif 'sse4a' in flags:
+                            _localized['simd'] = 'sse4a'
+                        elif 'sse3' in flags:
+                            _localized['simd'] = 'sse3'
                         break
 
             except:
                 print >>sys.stderr, \
                     "module: warning: couldn't parse /proc/cpuinfo"
-                _simd = '.'
-                _vendor = '.'
 
-    return path.replace('%SIMD%', _simd).replace('%VENDOR%', _vendor)
+    return path.replace('%VENDOR%', _localized['vendor']) \
+               .replace('%SIMD%', _localized['simd']) \
+               .replace('%MODEL%', _localized['model'])
 
 
 def info(msg):
