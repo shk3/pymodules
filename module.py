@@ -417,14 +417,14 @@ class ModuleEnv:
 
         if variable == 'MANPATH' and (not value or value[-1] != ':'):
             value += ':'
-        self._env[variable] = value
+        self._env[variable] = localize(value)
 
 
     def unset(self,variable,value=None):
         """ Unsets/resets the environment variable to the specified value """
 
         self._env_unset.add(variable)
-        if value: self.set(variable,value)
+        if value: self.set(variable,localize(value))
 
 
     def append(self,variable,path):
