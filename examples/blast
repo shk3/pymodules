@@ -1,0 +1,11 @@
+[DEFAULT]
+
+name = blast
+brief = BLAST - Basic Local Alignment Search Tool
+url = http://blast.ncbi.nlm.nih.gov/
+
+prepend PATH = %(rootdir)s/%%SIMD%%/bin
+set BLASTDB = /gpfs/data/blastdb
+
+[2.2.27+]
+
