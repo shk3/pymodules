@@ -1,6 +1,5 @@
 [DEFAULT]
 
-name = hdf5
 brief = The Hierarchical Data Format v5
 url = http://www.hdfgroup.org/HDF5/
 

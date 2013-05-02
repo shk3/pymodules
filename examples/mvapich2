@@ -1,13 +1,13 @@
 [DEFAULT]
 
-name = mvapich2
 brief = The MVAPICH2 Message Passing Library
 url = http://mvapich.cse.ohio-state.edu/
 
 prepend PATH = %(rootdir)s/bin
 prepend MANPATH = %(rootdir)s/share/man
-prepend LD_LIBRARY_PATH = %(rootdir)s/lib
+prepend LIBRARY_PATH = %(rootdir)s/lib
 prepend LD_RUN_PATH=%(rootdir)s/lib
+prepend LD_LIBRARY_PATH = %(rootdir)s/lib
 prepend PKG_CONFIG_PATH = %(rootdir)s/lib/pkgconfig
 prepend PYTHONPATH = %(rootdir)s/lib/python2.7/site-packages
 

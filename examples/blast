@@ -1,6 +1,5 @@
 [DEFAULT]
 
-name = blast
 brief = BLAST - Basic Local Alignment Search Tool
 url = http://blast.ncbi.nlm.nih.gov/
 
