@@ -86,20 +86,21 @@ def localize(path):
         _localized = { 'vendor': '.', 'simd': '.', 'model': '.' }
         if os.path.exists('/proc/cpuinfo'):
             try:
+                model = []
                 for line in open('/proc/cpuinfo'):
-                    if line.startswith('vendor_id'):
-                        vendor = line.rstrip().split()[2]
-                        if vendor == 'GenuineIntel':
+                    line = line.rstrip().split()
+                    if line[0] == 'vendor_id':
+                        if line[2] == 'GenuineIntel':
                             _localized['vendor'] = 'intel'
-                        elif vendor == 'AuthenticAMD':
+                        elif line[2] == 'AuthenticAMD':
                             _localized['vendor'] = 'amd'
-                        _localized['model'] = vendor
-                    elif line.startswith('cpu family'):
-                        _localized['model'] += '-' + line.rstrip().split()[-1]
-                    elif line.startswith('model'):
-                        _localized['model'] += '-' + line.rstrip().split()[-1]
-                    elif line.startswith('flags'):
-                        flags = set(line.rstrip().split()[2:])
+                        model.append(_localized['vendor'])
+                    elif line[0] == 'cpu' and line[1] == 'family':
+                        model.append(line[-1])
+                    elif line[0] == 'model' and line[1] == ':':
+                        model.append(line[-1])
+                    elif line[0] == 'flags':
+                        flags = set(line[2:])
                         if 'avx' in flags:
                             _localized['simd'] = 'avx'
                         elif 'sse4_2' in flags:
@@ -108,7 +109,12 @@ def localize(path):
                             _localized['simd'] = 'sse4a'
                         elif 'sse3' in flags:
                             _localized['simd'] = 'sse3'
+                        # No more lines need to be read.
                         break
+
+                # Only set model if all three fields are found.
+                if len(model) == 3 and model[0] != '.':
+                    _localized['model'] = '-'.join(model)
 
             except:
                 print >>sys.stderr, \
