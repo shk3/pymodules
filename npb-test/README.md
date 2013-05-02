@@ -21,6 +21,8 @@ generate four log files:
     ./run.sh 16 sse3 sse4a >"Opteron 8382.txt"
     ./run.sh 64 sse3 avx >"Opteron 6282SE.txt"
 
+These log files are included in this directory for reference.
+
 Figure 2 in our LISA'13 submission was generated from these log files with
 the plot.py script:
 
