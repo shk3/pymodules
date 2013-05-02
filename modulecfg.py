@@ -25,17 +25,24 @@
 
 import os
 
-# Environment variables.
+### MODIFY THESE ###
 
-MODULEPATH = os.environ['MODULEPATH']
-MODULEDB = os.path.join(MODULEPATH, '.db.sqlite')
-MODULESHELL = os.environ['MODULESHELL']
-LOADEDMODULES = 'LOADEDMODULES'
+# Set this to the root directory where all software packages will be installed.
+# PyModules enforces the convention that you install all packages to:
+#   <rootdir>/<package-name>/<package-version>
+rootdir = '/gpfs/runtime/opt/'
+
+# Forces all modulefiles to have group-writable permissions: important if you
+# plan to have multiple users maintaining modulefiles and updating the
+# database. NOTE: you must include the leading 0 in the octal code!
+moduleperm = 0664
+
+### DO NOT EDIT BELOW ###
 
 # Default data.
 
 defaults = {
-    'rootdir': '/gpfs/runtime/opt/%(name)s/%(__name__)s',
+    'rootdir': os.path.join(rootdir, '%(name)s', '%(__name__)s'),
     'version': '%(__name__)s',
     'default': 'false'
 }
@@ -46,8 +53,10 @@ messages = {
   with this module name should be installed."""
 }
 
-# Forces all modulefiles to have group-writable permissions: important if you
-# plan to have multiple users maintaining modulefiles and updating the
-# database. NOTE: you must include the leading 0 in the octal code!
-moduleperm = 0664
+# Environment variables.
+
+MODULEPATH = os.environ['MODULEPATH']
+MODULEDB = os.path.join(MODULEPATH, '.db.sqlite')
+MODULESHELL = os.environ['MODULESHELL']
+LOADEDMODULES = 'LOADEDMODULES'
 

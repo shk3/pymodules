@@ -1,3 +1,45 @@
 Installation
 ============
 
+PyModules is simple collection of python scripts that can be installed in
+almost any directory.
+
+The only prerequisite is the `argparse` module, which is included by default
+in Python >=2.7, but will need to be installed in older versions of Python. We
+have only tested PyModules with Python 2.6 and 2.7.
+
+To install, copy the `*.py` files from this directory to some directory, for
+instance `/opt/pymodules`::
+
+    cp *.py /opt/pymodules
+
+Then edit the `modulecfg.py` file to set the root directory where you will
+install all software packages, maybe `/opt/packages`::
+
+    rootdir = '/opt/packages'
+
+Finally, the `modules` command must be initialized in the users' shell when
+they login. The file `init/modules.sh` performs this initialization, and
+can be copied to a central location like `/etc/profile.d` so that it loads
+for all users. We copy it to `/etc/profile.d/zz-modules.sh` so that it will
+be loaded alphabetically after all other init files. This way, PyModules will
+be the last to modify environment variables like `PATH`.
+
+After copying the init file, edit its first lines to set the absolute path to
+your Python interpreter, as well as the path to where you installed the `*.py`
+files and the directory where you will keep the INI-style module configuration
+files (modulefiles)::
+
+    export MODULEHOME=/opt/pymodules
+    export MODULEPATH=/opt/pymodules/modulefiles
+    export MODULESHELL=bash
+    export MODULEPYTHON=/usr/bin/python
+
+Currently, we only support the `bash` shell, but in principle PyModules could
+be extended to support `csh` or `zsh`. This is a low development priority for
+us, however.
+
+The SQLite database will automatically be created in `MODULEPATH` in a file
+called `.db.sqlite` the first time you call `moduledb` to insert a
+modulefile.
+
