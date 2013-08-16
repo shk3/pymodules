@@ -1,6 +1,8 @@
 Performance of NAS Parallel Benchmarks with SSE3 vs. Higher SSE Instructions
 ============================================================================
 
+## Methods
+
 We tested four architectures on the Oscar cluster at CCV:
 
 * Intel Xeon E5540 (Nehalem, SSE4.2, 8 cores)
@@ -30,6 +32,8 @@ different versions, e.g.
 where the first argument is the number of cores, and the next two arguments
 are the directories containing the build variants.
 
+## Results
+
 On the Oscar cluster at CCV, we ran this script on the appropriate nodes to
 generate four log files:
 
@@ -40,11 +44,23 @@ generate four log files:
 
 These log files are included in this directory for reference.
 
-Figure 2 in our LISA'13 submission was generated from these log files with
-the plot.py script:
+![Performance of NAS Parallel Benchmarks with SSE3 vs. Higher SSE Instructions](nas.png)
+
+This figure was generated from the included log files with the `plot.py` script:
 
     ./plot.py *.txt
 
 This script picks the trial with the maximum performace.  It requires
 matplotlib 1.2.0 and numpy 1.6.1.
+
+### References
+
+NASA Advanced Supercomputing Division. NAS Parallel Benchmarks 3.3.1
+[http://www.nas.nasa.gov/publications/npb.html](http://www.nas.nasa.gov/publications/npb.html)
+Retrieved April 29, 2013.
+
+### Acknowledgments
+
+This research was conducted using computational resources at the Center for
+Computation and Visualization, Brown University.
 

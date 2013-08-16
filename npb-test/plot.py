@@ -109,5 +109,5 @@ for j in range(nplots):
 legend(('SSE3', 'SSE4.2', 'AVX', 'SSE4a'), loc="upper right", fontsize=11)
 
 tight_layout()
-savefig('figure-nas.pdf')
+savefig('nas.png')
 
