@@ -53,6 +53,20 @@ This figure was generated from the included log files with the `plot.py` script:
 This script picks the trial with the maximum performace.  It requires
 matplotlib 1.2.0 and numpy 1.6.1.
 
+## Discussion
+
+The result above shows the performance of an SSE3 version versus an optimized
+(SSE4a, SSE4.2, or AVX) version of the NAS Parallel Benchmarks across four
+nodes in our cluster with difference architectures.  These three
+pseudo-applications represent common numerical solvers used for computational
+fluid dynamics. As we expected, none of the solvers gained any benefit from
+SSE4a or SSE4.2, because neither introduces any significantly new packed
+floating point instructions.  On the other hand, we did expect performance
+gains from AVX because of its increased 256-bit SIMD width.  Unfortunately,
+only one of the three solvers had improvement performance, and this was only on
+the order of a 10%.  In practice, we have not found much benefit from compiling
+most of our software packages with support for higher SSE instruction sets.
+
 ### References
 
 NASA Advanced Supercomputing Division. NAS Parallel Benchmarks 3.3.1
