@@ -44,7 +44,7 @@ generate four log files:
 
 These log files are included in this directory for reference.
 
-![Performance of NAS Parallel Benchmarks with SSE3 vs. Higher SSE Instructions](nas.png)
+![Performance of NAS Parallel Benchmarks with SSE3 vs. Higher SSE Instructions](https://bitbucket.org/mhowison/pymodules/raw/master/npb-test/nas.png)
 
 This figure was generated from the included log files with the `plot.py` script:
 
