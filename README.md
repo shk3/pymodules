@@ -15,14 +15,20 @@ It provides several new features:
 
 PyModules is developed by the
 [Center for Computation and Visualization](http://ccv.brown.edu/)
-at Brown University, and distributed under a non-commercial, open-source
-license (see the LICENSE file for full details).
+at Brown University, and distributed freely for academic use under a
+non-commercial license (see the LICENSE file for full details).
+
+## Installation
+
+Zip archives are available from the [downloads
+page](https://bitbucket.org/mhowison/pymodules/downloads), or you can clone the
+Bitbucket repo for the latest development version.
+
+For installation instructions, see the INSTALL file.
 
 ## Documentation
 
 See [http://ccv.brown.edu/mhowison/pymodules](http://ccv.brown.edu/mhowison/pymodules)
-
-For installation instructions, see the INSTALL file.
 
 ## Citing
 
@@ -38,4 +44,5 @@ Please report any issues using the issue tracker at Bitbucket:
 ## Authors
 Mark Howison  
 Andy Loomis
+Aaron Shen
 
