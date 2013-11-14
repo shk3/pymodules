@@ -32,8 +32,10 @@ See [http://ccv.brown.edu/mhowison/pymodules](http://ccv.brown.edu/mhowison/pymo
 
 ## Citing
 
-No citation is available yet. We currently have a paper submitted to the USENIX
-Large Installation System Administration Conference.
+Howison M, Shen A, Loomis A. 2013. Building Software Environments for Research
+Computing Clusters. In Proceedings of the 27th Large Installation System
+Administration Conference (LISA '13), Washington, DC, USA.
+[https://www.usenix.org/conference/lisa13/building-software-environments-research-computing-clusters](https://www.usenix.org/conference/lisa13/building-software-environments-research-computing-clusters)
 
 ## Issues
 
@@ -43,6 +45,6 @@ Please report any issues using the issue tracker at Bitbucket:
 
 ## Authors
 Mark Howison  
-Andy Loomis
+Andy Loomis  
 Aaron Shen
 
