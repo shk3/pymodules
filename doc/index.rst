@@ -24,7 +24,20 @@ It provides several new features:
 PyModules is developed by the
 `Center for Computation and Visualization <http://ccv.brown.edu/>`_
 at Brown University, and distributed under a non-commercial, open-source
-license (see below).
+license (see below). The latest source code is available from the git repository at:
+
+  `<https://bitbucket.org/mhowison/pymodules>`_
+
+Stable releases are also available as zip archives from:
+
+  `<https://bitbucket.org/mhowison/pymodules/downloads>`_
+
+
+Citing
+======
+
+Howison M, Shen A, Loomis A. 2013. `Building Software Environments for Research Computing Clusters <https://www.usenix.org/conference/lisa13/technical-sessions/papers/howison>`_. In Proceedings of the 27th Large Installation System Administration Conference (LISA '13), Washington, DC, USA.
+
 
 Contents
 ========
@@ -36,17 +49,13 @@ Contents
    modulefiles
 
 
-Citing
-======
-
-No citation is available yet. We currently have a paper submitted to the USENIX
-Large Installation System Administration Conference.
-
 Authors
 =======
 
 | Mark Howison
 | Andy Loomis
+| Aaron Shen
+
 
 License
 =======
